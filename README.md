@@ -8,9 +8,16 @@ Requires Node 24. Run `npm install`, `npm run refresh`, then `npm start`. Open h
 
 ## Render (primary deployment)
 
-The root `render.yaml` provisions a Node web service, shared PostgreSQL database, and weekly price-check cron job. Connect the GitHub repository from Render's **New → Blueprint**, select this file, and review the plan costs before deploying. The web service uses the free plan (it can sleep); the database and cron job use paid plans. No API keys belong in the repository. Render injects the internal database connection into both services.
+The root `render.yaml` provisions only a free Node web service. The database uses Supabase Free and weekly updates use GitHub Actions; no paid Render database or cron service is declared. Free plans have quotas, Render sleeps when idle, and Supabase may pause projects with low activity. This is suitable for an initial small directory, without an uptime guarantee.
 
-The web service checks for due prices on startup, then serves the app. The cron job refreshes supported menus every Monday at 12:00 UTC (7 a.m. Eastern standard time / 8 a.m. Eastern daylight time). It forces a check so startup observations cannot delay the weekly job. The database is restricted to Render internal connections. Scheduling becomes active after the Blueprint deploys successfully. Check `/health` and `/api/restaurants` on the resulting service URL.
+1. Create a Supabase Free project. In **Connect**, choose the shared pooler in **session mode** for IPv4 compatibility. Replace the password placeholder and use the supplied TLS configuration (e.g. `sslmode=verify-full` with trusted certificates). Never disable certificate verification. The connection is used only by trusted server processes.
+2. Add that connection string as **DATABASE_URL** in Render's Blueprint setup. The server initializes its private `beverly_pizza` schema. No tables or credentials are exposed to the browser; RLS is enabled, and no public access policies are created. Keep this schema out of Supabase's exposed API schemas.
+3. Add the same **DATABASE_URL** under GitHub repository **Settings → Secrets and variables → Actions → New repository secret**.
+4. Deploy the Render Blueprint, then run **Actions → Refresh pizza prices → Run workflow** once to populate prices. Check `/health` and `/api/restaurants` on the resulting Render URL.
+
+The workflow refreshes supported menus Mondays at **12:17 UTC** (7:17 a.m. Eastern standard time / 8:17 a.m. Eastern daylight time). GitHub schedules may be delayed and can be disabled after 60 days of inactivity in public repositories; check Actions if dates stop advancing. Standard hosted runners are free for public repos; private repos use included minutes. Failures save a review observation and fail the job for visibility. Scheduling requires the database secret and Actions to be enabled. Supabase's free-project pausing is based on activity; weekly refreshes do not guarantee a project stays active. Resume it from the Supabase dashboard if necessary.
+
+If the older paid Render Blueprint was already deployed, removing its entries does not guarantee those resources are deleted. Remove any unused paid database or cron service in the Render dashboard after confirming no data is needed.
 
 ## Heroku (alternative)
 

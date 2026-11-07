@@ -1,5 +1,5 @@
 # Deploy from Render > New > Blueprint after connecting this repository.
-# The database and cron service use paid plans. Review Render's cost estimate.
+# Free web service only. Supabase supplies storage; GitHub Actions runs refreshes.
 services:
   - type: web
     name: beverly-pizza
@@ -7,36 +7,10 @@ services:
     plan: free
     region: virginia
     buildCommand: npm ci --omit=dev
-    startCommand: npm run refresh && npm start
+    startCommand: npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: beverly-pizza-db
-          property: connectionString
-
-  - type: cron
-    name: beverly-pizza-prices
-    runtime: node
-    plan: 0.5c-512mb
-    region: virginia
-    schedule: "0 12 * * MON"
-    buildCommand: npm ci --omit=dev
-    startCommand: npm run refresh -- --force
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: beverly-pizza-db
-          property: connectionString
-
-databases:
-  - name: beverly-pizza-db
-    region: virginia
-    plan: 0.1c-256mb
-    databaseName: beverly_pizza
-    user: beverly_pizza
-    ipAllowList: []
+        sync: false

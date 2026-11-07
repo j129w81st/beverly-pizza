@@ -1,0 +1,31 @@
+name: Refresh pizza prices
+on:
+  schedule:
+    - cron: '17 12 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: refresh-pizza-prices
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_ENV: production
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --omit=dev
+      - run: npm test
+      - name: Check database configuration
+        run: node -e 'if (!process.env.DATABASE_URL) throw new Error("Add the DATABASE_URL repository secret before running refreshes")'
+      - run: npm run refresh -- --force
