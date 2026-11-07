@@ -1,0 +1,1 @@
+{"name":"Beverly Pizza","description":"Beverly, MA pizza price comparison","addons":["heroku-postgresql:essential-0","scheduler:standard"],"env":{"NODE_ENV":{"value":"production"}},"scripts":{"postdeploy":"npm run refresh"}}
