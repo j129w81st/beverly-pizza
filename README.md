@@ -6,7 +6,13 @@ Beverly, Massachusetts restaurant directory comparing large cheese and large pep
 
 Requires Node 24. Run `npm install`, `npm run refresh`, then `npm start`. Open http://localhost:3000. Local observations persist under ignored `.local/`. Run `npm test` for parser checks.
 
-## Heroku
+## Render (primary deployment)
+
+The root `render.yaml` provisions a Node web service, shared PostgreSQL database, and weekly price-check cron job. Connect the GitHub repository from Render's **New → Blueprint**, select this file, and review the plan costs before deploying. The web service uses the free plan (it can sleep); the database and cron job use paid plans. No API keys belong in the repository. Render injects the internal database connection into both services.
+
+The web service checks for due prices on startup, then serves the app. The cron job refreshes supported menus every Monday at 12:00 UTC (7 a.m. Eastern standard time / 8 a.m. Eastern daylight time). It forces a check so startup observations cannot delay the weekly job. The database is restricted to Render internal connections. Scheduling becomes active after the Blueprint deploys successfully. Check `/health` and `/api/restaurants` on the resulting service URL.
+
+## Heroku (alternative)
 
 1. Authenticate with `heroku login`.
 2. Initialize Git, commit the source, and run `heroku create beverly-pizza` (name availability may require a suffix).
