@@ -1,6 +1,8 @@
 # Beverly Pizza
 
-Beverly, Massachusetts restaurant directory comparing large cheese and large pepperoni prices. Initial inventory: five shops; two supported live menu adapters. This is not yet an exhaustive city inventory. Prices are never invented; unverified shops remain visible with unknown prices. Menu changes and fetch failures retain the previous observation and mark the shop for review.
+Beverly, Massachusetts restaurant directory comparing large cheese and one-topping prices. Inventory expanded to 17 shops with seven supported live menu adapters. This is not yet an exhaustive city inventory. Prices are never invented; unverified shops remain visible with unknown prices. Menu changes and fetch failures retain the previous observation and mark the shop for review. Cheese-only observations are supported when a topping price cannot be established.
+
+Supported menus: Little Italy, Rantoul St Pizza, Greg’s Tavern (cheese only), Mike’s Pizzeria, Tesoro Cucina, Prides Deli, and Maria’s Corner Pizzeria (cheese only). Tesoro’s standard 16-inch base is Margherita; Mike’s uses the regular topping surcharge. These distinctions appear next to the shop. Cabot and Ellie’s display starting prices without confirming a large size, so those prices are excluded. Third-party delivery markups and small-size prices are not substituted for comparable large pizzas. The workflow also refreshes prices when menu collector code or the directory changes on main.
 
 ## Local development
 
@@ -28,6 +30,6 @@ If the older paid Render Blueprint was already deployed, removing its entries do
 5. Run `heroku run npm run refresh -a beverly-pizza`.
 6. Open `heroku addons:open scheduler -a beverly-pizza` and add `npm run refresh`, daily at a chosen time. The command checks each supported shop only when its last attempt is at least seven days old, yielding a weekly cadence. Scheduling is not active until this job is configured.
 
-`npm run refresh -- --force` bypasses the seven-day interval. Run one refresh job at a time. Failed checks retry at the next weekly interval. New adapters belong in `prices.js`; add the shop to `data.js` with an official menu URL. Unsupported menus require adapter work before they can update automatically. Check dates indicate retrieval time, not the restaurant's publication date. No tax, delivery fees, or promotions are included. One-topping comparisons use pepperoni, not premium toppings. Rantoul's listed pepperoni pizza is used because its price differs from its base-plus-topping listing.
+`npm run refresh -- --force` bypasses the seven-day interval. Run one refresh job at a time. Failed checks retry at the next weekly interval. New adapters belong in `prices.js`; add the shop to `data.js` with an official menu URL. Unsupported menus require adapter work before they can update automatically. Check dates indicate retrieval time, not the restaurant's publication date. No tax, delivery fees, or promotions are included. One-topping comparisons use explicit pepperoni prices or the published regular topping rate; premium toppings are excluded. Rantoul's listed pepperoni pizza is used because its price differs from its base-plus-topping listing.
 
 Endpoints: `/api/restaurants` includes latest prices, source, dates, review status and recent history; `/health` checks storage access.

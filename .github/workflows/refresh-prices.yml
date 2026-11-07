@@ -1,5 +1,11 @@
 name: Refresh pizza prices
 on:
+  push:
+    branches: [main]
+    paths:
+      - data.js
+      - prices.js
+      - scripts/refresh.js
   schedule:
     - cron: '17 12 * * 1'
   workflow_dispatch:
