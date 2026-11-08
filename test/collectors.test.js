@@ -15,7 +15,33 @@ test('Regina rejects missing pepperoni rather than using a different pizza',()=>
 test('Regina rejects a missing size rather than using a small pizza',()=>assert.throws(()=>parseDocument('regina-pdf',regina.replaceAll('16”','12”'))));
 test('Giuseppe’s requires the Beverly location and explicit large topping charge',()=>assert.deepEqual(parseDocument('giuseppes-browser','Pizza - Pizza Menu Beverly Build Your Own Pizza | Large $19 Large $2 per topping Meats: Italian Sausage, Pepperoni, Meatballs'),{cheese:1900,topping:2100}));
 test('Browser access challenges cannot become prices',()=>assert.throws(()=>parseDocument('giuseppes-browser','Performing security verification. $19')));
+const nicks='207 Essex Street, Beverly, MA 01915 Pizza & Calzones Cheese SM - $10.00 LG - $12.99 Specialty Pizzas Meat Lovers SM - $15.00 LG - $20.00';
+test('Nick’s reads the large cheese rather than small or specialty prices',()=>assert.deepEqual(parseDocument('nicks-browser',nicks),{cheese:1299,topping:null}));
+test('Nick’s rejects another location and menus without a large price',()=>{
+ assert.throws(()=>parseDocument('nicks-browser',nicks.replace('207 Essex Street','100 Main Street')));
+ assert.throws(()=>parseDocument('nicks-browser',nicks.replace('LG - $12.99','')));
+});
 test('PDF collector rejects HTML responses',async()=>assert.rejects(pdfText(Buffer.from('<html>Access denied</html>')),/did not return a PDF/));
+
+test('Ellie’s selects Large, waits for its topping charge and never adds to cart',{skip:!process.env.RUN_BROWSER_TESTS},async()=>{
+ let cartRequests=0;
+ const server=createServer((req,res)=>{
+  if(req.url==='/cart'){cartRequests++;res.end('unexpected');return;}
+  res.setHeader('Content-Type','text/html');
+  res.end(`<body>728 Hale St, Beverly Farms, MA 01915
+   <button data-name="Cheese Pizza_productContent" onclick="document.querySelector('[role=dialog]').hidden=false">Cheese Pizza</button>
+   <div role="dialog" aria-label="Product modal for Cheese Pizza" hidden>
+    <div role="radiogroup"><button role="radio" aria-checked="true">Small $9.95</button><button role="radio" aria-checked="false" onclick="setTimeout(()=>{this.setAttribute('aria-checked','true');document.querySelector('#extra').textContent='+$2.00';document.querySelector('#total').textContent='$16.99'},150)">Large $16.99</button></div>
+    <button role="checkbox" aria-checked="false" onclick="this.setAttribute('aria-checked','true');document.querySelector('#total').textContent='$18.99'">Pepperoni <span id="extra">+$1.35</span></button>
+    <button onclick="fetch('/cart',{method:'POST'})">Add to Order <span id="total">$9.95</span></button>
+   </div></body>`);
+ });
+ server.listen(0,'127.0.0.1');await once(server,'listening');
+ try{
+  const result=await collectPrices({url:`http://127.0.0.1:${server.address().port}`,adapter:'ellies-browser',collector:{type:'browser',waitForText:'Cheese Pizza'}});
+  assert.equal(result.cheese,1699);assert.equal(result.topping,1899);assert.equal(cartRequests,0);
+ }finally{await closeCollectors();await new Promise(resolve=>server.close(resolve));}
+});
 
 // A real, minimal PDF generated in memory verifies the binary-to-text pipeline.
 function makePdf(text){

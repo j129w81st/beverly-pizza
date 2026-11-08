@@ -65,11 +65,34 @@ async function browserPage(url,waitForText,adapter){
    throw new Error(`Browser menu returned HTTP ${response.status()}`);
   }
   if(waitForText)await page.getByText(new RegExp(waitForText,'i')).first().waitFor({state:'visible',timeout:20000});
-  const prices=adapter==='panini-browser'?await paniniOptions(page):undefined;
+  const prices=adapter==='panini-browser'?await paniniOptions(page):adapter==='ellies-browser'?await elliesOptions(page):undefined;
   const text=await page.locator('body').innerText();
   if(/verify you are human|access denied|checking your browser|just a moment|performing security verification/i.test(text.slice(0,1000)))throw new ReviewRequiredError('Browser menu requires access verification');
   return {text,prices,url:page.url()};
  }finally{await context.close();}
+}
+
+async function elliesOptions(page){
+ if(!/728 Hale St, Beverly Farms, MA 01915/i.test(await page.locator('body').innerText()))throw new Error('Browser menu is not Ellie’s Beverly location');
+ await page.locator('[data-name="Cheese Pizza_productContent"]').first().click();
+ const dialog=page.getByRole('dialog',{name:'Product modal for Cheese Pizza'});
+ const large=dialog.getByRole('radio',{name:/^Large\b/});
+ await dialog.getByRole('radiogroup').first().waitFor();
+ if(await large.count()!==1)throw new ReviewRequiredError('Ellie’s menu has no unambiguous Large size');
+ const base=(await large.innerText()).match(/\$(\d+\.\d{2})\s*$/)?.[1];
+ if(!base)throw new Error('Large cheese has no explicit price');
+ await large.click();
+ const total=dialog.getByRole('button',{name:/Add to Order/});
+ await total.filter({hasText:`$${base}`}).waitFor();
+ const pepperoni=dialog.getByRole('checkbox',{name:/^Pepperoni\b/});
+ if(await pepperoni.count()!==1)throw new ReviewRequiredError('Large pepperoni charge needs verification');
+ const extra=(await pepperoni.innerText()).match(/\+\$(\d+\.\d{2})\s*$/)?.[1];
+ if(!extra)throw new Error('Large pepperoni has no explicit charge');
+ const cheese=Math.round(Number(base)*100),topping=cheese+Math.round(Number(extra)*100);
+ await pepperoni.click();
+ await total.filter({hasText:`$${(topping/100).toFixed(2)}`}).waitFor();
+ // Selecting size/topping only previews the item; never click Add to Order.
+ return validatePrices({cheese,topping});
 }
 
 async function paniniOptions(page){
@@ -120,9 +143,13 @@ export function parseDocument(adapter,text){
   if(!/Pizza\s*-\s*Pizza Menu\s+Beverly/i.test(normalized))throw new Error('Browser menu is not the Beverly pizza menu');
   const match=normalized.match(/Build Your Own Pizza\s*\|\s*Large\s+\$(\d+(?:\.\d{1,2})?)\s+Large\s+\$(\d+(?:\.\d{1,2})?)\s+per topping\s+Meats:[^:]{0,100}Pepperoni/i);
   if(match){cheese=match[1];topping=Number(cheese)+Number(match[2]);}
+ }else if(adapter==='nicks-browser'){
+  if(!/207 Essex Street, Beverly, MA 01915/i.test(normalized))throw new Error('Browser menu is not Nick’s Beverly location');
+  const match=normalized.match(/Pizza & Calzones\s+Cheese\s+SM\s*-\s*\$\d+\.\d{2}\s+LG\s*-\s*\$(\d+\.\d{2})\s+Specialty Pizzas/i);
+  if(match){cheese=match[1];topping=null;}
  }
  if(cheese===undefined||topping===undefined)throw new Error('Menu format needs review; no unambiguous large prices');
- const result={cheese:Math.round(Number(cheese)*100),topping:Math.round(Number(topping)*100)};
+ const result={cheese:Math.round(Number(cheese)*100),topping:topping===null?null:Math.round(Number(topping)*100)};
  return validatePrices(result);
 }
 
