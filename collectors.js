@@ -14,23 +14,42 @@ export async function download(url){
  return {data:Buffer.concat(chunks),url:response.url};
 }
 
-export async function pdfText(data){
+export async function extractPdf(data,{ocr=false}={}){
  if(Buffer.from(data).subarray(0,5).toString()!=='%PDF-')throw new Error('Menu link did not return a PDF');
  const {getDocument}=await import('pdfjs-dist/legacy/build/pdf.mjs');
  const task=getDocument({data:new Uint8Array(data),isEvalSupported:false,stopAtErrors:true,standardFontDataUrl:fileURLToPath(new URL('standard_fonts/',import.meta.resolve('pdfjs-dist/package.json')))});
  try{
   const pdf=await task.promise;
   if(pdf.numPages>20)throw new Error('PDF exceeds 20-page menu limit');
-  const pages=[];
+  const pages=[],scanned=[];
   for(let i=1;i<=pdf.numPages;i++){
    const page=await pdf.getPage(i),content=await page.getTextContent();
-   pages.push(content.items.map(item=>item.str+(item.hasEOL?'\n':' ')).join(''));
+   const text=content.items.map(item=>item.str+(item.hasEOL?'\n':' ')).join('');
+   pages.push(text);
+   if(ocr&&text.trim().length<40){
+    if(scanned.length>=4)throw new ReviewRequiredError('Scanned PDF exceeds four-page OCR review limit');
+    const natural=page.getViewport({scale:1});
+    const scale=Math.min(2,Math.sqrt(10000000/(natural.width*natural.height)));
+    const viewport=page.getViewport({scale});
+    const {createCanvas}=await import('@napi-rs/canvas');
+    const canvas=createCanvas(Math.ceil(viewport.width),Math.ceil(viewport.height));
+    await page.render({canvasContext:canvas.getContext('2d'),viewport,canvas}).promise;
+    scanned.push({index:i-1,image:canvas.toBuffer('image/png')});
+   }
+  }
+  let confidence=null;
+  if(scanned.length){
+   const {recognizeMenuImages}=await import('./ocr.js');
+   const results=await recognizeMenuImages(scanned.map(p=>p.image));
+   results.forEach((result,index)=>{pages[scanned[index].index]=result.text;});
+   confidence=Math.min(...results.map(result=>result.confidence));
   }
   const text=pages.join('\n\n');
   if(text.trim().length<40)throw new Error('PDF has no usable text; scanned menu needs OCR review');
-  return text;
+  return {text,method:scanned.length?'ocr':'text',confidence};
  }finally{await task.destroy();}
 }
+export async function pdfText(data){return (await extractPdf(data)).text;}
 
 let browserPromise;
 async function browserPage(url,waitForText,adapter){
@@ -115,7 +134,16 @@ export async function collectPrices(shop){
   const links=$('a[href]').toArray().map(a=>new URL($(a).attr('href'),landing.url).href).filter(h=>new RegExp(config.linkPattern).test(h));
   const unique=[...new Set(links)];
   if(unique.length!==1)throw new Error('Expected exactly one location-specific PDF menu link');
-  const pdf=await download(unique[0]);url=pdf.url;text=await pdfText(pdf.data);prices=parseDocument(shop.adapter,text);
+  const pdf=await download(unique[0]);url=pdf.url;
+  const extracted=await extractPdf(pdf.data,{ocr:config.ocr===true});text=extracted.text;
+  if(extracted.method==='ocr'){
+   let candidate=null;
+   try{candidate=parseDocument(shop.adapter,text);}catch{/* An uncertain OCR result must not become a published price. */}
+   const review=new ReviewRequiredError('Scanned menu read with OCR; price verification required');
+   review.review={restaurant_id:shop.id,source_url:url,confidence:extracted.confidence,candidate,excerpt:text.slice(0,700)};
+   throw review;
+  }
+  prices=parseDocument(shop.adapter,text);
  }else if(config.type==='browser'){
   const page=await browserPage(config.url??shop.url,config.waitForText,shop.adapter);url=page.url;text=page.text;prices=page.prices??parseDocument(shop.adapter,text);
  }else{

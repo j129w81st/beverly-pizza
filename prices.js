@@ -41,6 +41,20 @@ export function parsePrices(adapter,html){
    const index=header?.indexOf('Large');
    if(index>0){cheese=entries.find(r=>r[0]==='Cheese')?.[index];const roni=entries.find(r=>r[0]==='Roni')?.[index];if(cheese&&roni)topping=Number(roni)-Number(cheese);}
   }
+ }else if(adapter==='anchor'){
+  const section=text.match(/Pizza\s+Toppings:\s*([\s\S]{0,900}?)Shrimp Scampi/i)?.[1];
+  if(section&&/Pepperoni/i.test(section)){
+   cheese=section.match(/Cheese\s*\$\d+\.\d{2}\s*\/\s*Small\s*\$(\d+\.\d{2})\s*\/\s*Large/i)?.[1];
+   topping=section.match(/Large:\s*\+\$(\d+\.\d{2})\s+per topping/i)?.[1];
+  }
+ }else if(adapter==='mikeys'){
+  const section=text.match(/Pizza\s+Toppings for\s*\+\$(\d+\.\d{2})\s+each:\s*([\s\S]{0,450}?)Cheese Pizza\s+Small\s*-\s*\$\d+\.\d{2}\s*\|\s*Large\s*-\s*\$(\d+\.\d{2})/i);
+  if(section&&/Pepperoni/i.test(section[2])){cheese=section[3];topping=section[1];}
+ }else if(adapter==='rev'){
+  if(/45 Enon St\.? Beverly/i.test(text)&&/Neapolitan Crust in 9[”"]\s*&\s*16[”"]/i.test(text)){
+   const byo=text.match(/Build Your Own\s+Individual\s+\d+(?:\.\d{2})?,\s*Toppings\s*\$\d+(?:\.\d{2})?\s+each\s+Regular\s+(\d+(?:\.\d{2})?),\s*Toppings\s*\$(\d+(?:\.\d{2})?)\s+each/i);
+   if(byo&&/Pepperoni/i.test(text)){cheese=byo[1];topping=byo[2];}
+  }
  }else if(adapter==='marias'){
   cheese=text.match(/Large Three Blended Cheeses Pizza\s*\$(\d+\.\d{2})/i)?.[1];
   topping=null;

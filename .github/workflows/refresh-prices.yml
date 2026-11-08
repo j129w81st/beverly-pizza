@@ -7,6 +7,7 @@ on:
       - prices.js
       - scripts/refresh.js
       - collectors.js
+      - ocr.js
       - db.js
       - package-lock.json
       - .github/workflows/refresh-prices.yml
@@ -39,6 +40,15 @@ jobs:
       - run: npm test
         env:
           RUN_BROWSER_TESTS: '1'
+          RUN_OCR_TESTS: '1'
       - name: Check database configuration
         run: node -e 'if (!process.env.DATABASE_URL) throw new Error("Add the DATABASE_URL repository secret before running refreshes")'
       - run: npm run refresh -- --force
+      - name: Save menu review report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-review-report
+          path: .local/collector-reviews.json
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,7 +1,9 @@
 import {restaurants} from '../data.js';
 import {init,save,history,close} from '../db.js';
 import {collectPrices,closeCollectors} from '../collectors.js';
+import {mkdir,writeFile} from 'node:fs/promises';
 await init();
+const reviews=restaurants.filter(r=>!r.adapter).map(r=>({restaurant_id:r.id,source_url:r.url,reason:r.operatingStatus==='needs-confirmation'?'Current operation needs confirmation':'Collector or comparable large-size price needs verification'}));
 try{
  const rows=await history();
  for(const shop of restaurants.filter(r=>r.adapter)){
@@ -9,7 +11,16 @@ try{
   if(!process.argv.includes('--force')&&latest&&Date.now()-new Date(latest.checked_at)<86400000)continue;
   const row={restaurant_id:shop.id,checked_at:new Date().toISOString(),cheese:null,topping:null,error:null};
   try{Object.assign(row,await collectPrices(shop));console.log(`${shop.id}: collected ${row.source_type} prices`);}
-  catch(e){row.error=e.message;if(e.code!=='REVIEW_REQUIRED')process.exitCode=1;console.error(`${shop.id}: ${e.message}`);}
+  catch(e){
+   row.error=e.message;
+   if(e.code!=='REVIEW_REQUIRED')process.exitCode=1;
+   reviews.push({restaurant_id:shop.id,checked_at:row.checked_at,reason:e.message,...e.review});
+   console.error(`${shop.id}: ${e.message}`);
+  }
   await save(row);
  }
-}finally{await closeCollectors();await close();}
+}finally{
+ await mkdir('.local',{recursive:true});
+ await writeFile('.local/collector-reviews.json',JSON.stringify(reviews,null,2));
+ await closeCollectors();await close();
+}

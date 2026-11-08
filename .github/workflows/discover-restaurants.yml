@@ -1,0 +1,31 @@
+name: Discover Beverly pizza places
+on:
+  schedule:
+    - cron: '43 9 * * 0'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/discover.js
+      - .github/workflows/discover-restaurants.yml
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --omit=dev
+      - run: node scripts/discover.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: restaurant-discovery-report
+          path: .local/discovery-report.json
+          if-no-files-found: ignore
+          retention-days: 14
