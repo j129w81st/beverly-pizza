@@ -7,7 +7,7 @@ app.get('/health',async(req,res,next)=>{try{await history();res.json({ok:true});
 app.get('/api/restaurants',async(req,res,next)=>{
  try{const rows=await history();res.json(restaurants.map(shop=>{
   const all=rows.filter(r=>r.restaurant_id===shop.id),last=all[0],valid=all.find(r=>!r.error);
-  return {...shop,adapter:undefined,cheese:valid?.cheese??null,topping:valid?.topping??null,verifiedAt:valid?.checked_at??null,checkedAt:last?.checked_at??null,status:last?.error?'review':valid?'verified':'pending',history:all.filter(r=>!r.error).slice(0,12)};
+  return {...shop,adapter:undefined,collector:undefined,url:valid?.source_url??shop.url,sourceType:valid?.source_type??null,cheese:valid?.cheese??null,topping:valid?.topping??null,verifiedAt:valid?.checked_at??null,checkedAt:last?.checked_at??null,status:last?.error?'review':valid?'verified':'pending',history:all.filter(r=>!r.error).slice(0,12)};
  }));}catch(e){next(e);}
 });
 app.use(express.static('public'));

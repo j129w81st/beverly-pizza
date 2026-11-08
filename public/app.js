@@ -6,8 +6,9 @@ function render(){
  const field=$('sort').value;
  const list=shops.filter(r=>(r.name+' '+r.address).toLowerCase().includes($('search').value.toLowerCase())&&(!$('verified').checked||r.cheese!=null)).sort((a,b)=>field==='name'?a.name.localeCompare(b.name):(a[field]??Infinity)-(b[field]??Infinity)||a.name.localeCompare(b.name));
  $('results').innerHTML=list.length?list.map(r=>{
- const stale=r.verifiedAt&&Date.now()-new Date(r.verifiedAt)>8*86400000;
- const status=r.status==='review'?'Menu needs review':r.verifiedAt?`${stale?'Older price · ':'Checked '}${new Date(r.verifiedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/New_York'})}`:'Price verification pending';
+ const stale=r.verifiedAt&&Date.now()-new Date(r.verifiedAt)>2*86400000;
+ const method=r.sourceType==='pdf'?' · PDF menu':r.sourceType==='browser'?' · Browser menu':'';
+ const status=(r.status==='review'?'Menu needs review':r.verifiedAt?`${stale?'Older price · ':'Checked '}${new Date(r.verifiedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/New_York'})}`:'Price verification pending')+method;
  return `<article class="shop"><div><h3>${escape(r.name)}</h3><p>${escape(r.address)} · ${escape(r.size)}</p>${r.phone?`<p><a href="tel:${escape(r.phone)}">${escape(r.phone)}</a></p>`:''}<span class="status">${escape(status)}</span>${r.priceNote?`<p class="price-note">${escape(r.priceNote)}</p>`:''}</div><div class="price"><small>Large cheese</small>${r.cheese==null?'<em>Not verified yet</em>':`<strong>${money(r.cheese)}</strong>`}</div><div class="price"><small>+ one topping</small>${r.topping==null?'<em>Not verified yet</em>':`<strong>${money(r.topping)}</strong>`}</div><a class="source" href="${escape(r.url)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escape(r.name)} source menu">↗</a></article>`;
  }).join(''):'<p>No shops match your search.</p>';
 }

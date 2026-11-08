@@ -6,8 +6,12 @@ on:
       - data.js
       - prices.js
       - scripts/refresh.js
+      - collectors.js
+      - db.js
+      - package-lock.json
+      - .github/workflows/refresh-prices.yml
   schedule:
-    - cron: '17 12 * * 1'
+    - cron: '17 8 * * *'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +24,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     env:
       NODE_ENV: production
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -31,7 +35,10 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --omit=dev
+      - run: npx playwright install --with-deps chromium
       - run: npm test
+        env:
+          RUN_BROWSER_TESTS: '1'
       - name: Check database configuration
         run: node -e 'if (!process.env.DATABASE_URL) throw new Error("Add the DATABASE_URL repository secret before running refreshes")'
       - run: npm run refresh -- --force
