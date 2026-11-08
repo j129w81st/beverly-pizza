@@ -28,7 +28,25 @@ for(const source of sources){
   report.sources.push({url:source,status:'checked',leads:candidates.size});report.candidates.push(...candidates.values());
  }catch(error){report.sources.push({url:source,status:'failed',error:error.message});}
 }
+// A city-boundary query broadens discovery beyond businesses labeled "pizza".
+// OSM is incomplete and can be stale; every result still needs menu verification.
+try{
+ const query='[out:json][timeout:25];area["name"="Massachusetts"]["admin_level"="4"]->.state;rel(area.state)["name"="Beverly"]["boundary"="administrative"]["admin_level"="8"];map_to_area->.city;nwr(area.city)["amenity"~"restaurant|fast_food|cafe|bar|pub"];out center tags;';
+ const endpoint=new URL('https://overpass-api.de/api/interpreter');endpoint.searchParams.set('data',query);
+ const response=await fetch(endpoint,{headers:{Accept:'application/json','User-Agent':'BeverlyPizza/1.0'},signal:AbortSignal.timeout(45000)});
+ if(!response.ok)throw new Error(`City map returned HTTP ${response.status}`);
+ const data=await response.json();
+ let leads=0;
+ for(const element of data.elements??[]){
+  const tags=element.tags??{},name=tags.name;if(!name)continue;
+  const address=[tags['addr:housenumber'],tags['addr:street']].filter(Boolean).join(' ');
+  const street=s=>normalize(s).replace(/street/g,'st').replace(/avenue/g,'ave');
+  if(restaurants.some(r=>normalize(r.name)===normalize(name)||(address&&street(r.address)===street(address))))continue;
+  report.candidates.push({name,address,cuisine:tags.cuisine??null,source_url:`https://www.openstreetmap.org/${element.type}/${element.id}`,lead_url:tags.website??tags['contact:website']??null,status:'unverified-food-venue',pizzaTagged:/pizza/i.test(tags.cuisine??'')||/pizza|pizzeria/i.test(name),reason:'City-map food venue: verify current operation, pizza offering and duplicates before publishing'});leads++;
+ }
+ report.sources.push({url:'https://www.openstreetmap.org/',status:'checked',foodVenues:data.elements?.length??0,leads,attribution:'© OpenStreetMap contributors; ODbL https://www.openstreetmap.org/copyright'});
+}catch(error){report.sources.push({url:'https://www.openstreetmap.org/',status:'failed',error:error.message});}
 await mkdir('.local',{recursive:true});
 await writeFile('.local/discovery-report.json',JSON.stringify(report,null,2));
-console.log(`Discovery report: ${report.candidates.length} unverified leads; ${report.sources.filter(s=>s.status==='checked').length}/${sources.length} sources checked`);
+console.log(`Discovery report: ${report.candidates.length} unverified leads; ${report.sources.filter(s=>s.status==='checked').length}/${report.sources.length} sources checked`);
 if(report.sources.every(s=>s.status==='failed'))process.exitCode=1;

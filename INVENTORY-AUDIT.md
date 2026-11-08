@@ -1,6 +1,6 @@
 # Beverly pizza inventory audit — November 8, 2026
 
-26 locations tracked. This is a researched working inventory, not a verified census of every food establishment. Do not inflate the count to a target based on search result counts: directories often include surrounding towns, closed locations, duplicate names, or restaurants with only a kids pizza.
+27 locations tracked. This is a researched working inventory, not a verified census of every food establishment. Do not inflate the count to a target based on search result counts: directories often include surrounding towns, closed locations, duplicate names, or restaurants with only a kids pizza. Toscana Bar Italiano at 90 Rantoul was additionally confirmed from its official current food menu; its standard pizza diameter and plain topping charge remain unconfirmed.
 
 Newly identified sources: Anchor Pub & Grille (20 Cabot), Mikey’s Famous Roast Beef & Pizza (250 Elliott), Nick’s (207 Essex), North Beverly Roast Beef & Seafood (10 Enon), REV Kitchen & Bar (45 Enon), Salerno’s (73 Cabot), Sidedoor Sally’s (214 Cabot), A&B Burgers (206 Cabot), and The Castle (140 Rantoul). Their website/menu references are in `data.js`. Live Anchor, Mikey’s and REV menus support new automated price collectors.
 
@@ -28,6 +28,6 @@ Newly identified sources: Anchor Pub & Grille (20 Cabot), Mikey’s Famous Roast
 
 ## Workflow
 
-Nightly collection updates known menu sources. A separate Sunday discovery workflow checks Beverly Main Streets and a pizza directory for unfamiliar leads and saves an artifact for review. It does not claim completeness or automatically publish unverified leads. The next step toward a complete census is reconciling a current city food-establishment permit list against those sources, then verifying the menu of every additional candidate. No permit-list request or restaurant outreach has been sent.
+Nightly collection updates known menu sources. A separate Sunday discovery workflow checks Beverly Main Streets, a pizza directory, and OpenStreetMap food venues within the Beverly city boundary for unfamiliar leads and saves an artifact for review. The first city-boundary query returned 40 food venues, including non-pizza businesses and stale entries; this is not 40 pizza restaurants. OSM attribution is retained in the report. Discovery does not claim completeness or automatically publish unverified leads. The next step toward a complete census is reconciling a current city food-establishment permit list against those sources, then verifying the menu of every additional candidate. No permit-list request or restaurant outreach has been sent.
 
 `/coverage.html` shows price coverage and outstanding work; `/api/coverage.csv` is an audit/export view of the live database. Spreadsheet exports are useful for review, but they do not replace checking restaurant menus. Some restaurants may not offer a comparable large pie at all.
