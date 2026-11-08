@@ -1,6 +1,13 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {directory,coverage,coverageCsv} from '../directory.js';
+import {diameterInches} from '../pizza-size.js';
+test('Diameters use explicit inches and never infer Large or rectangular pan dimensions',()=>{
+ assert.equal(diameterInches('10-inch'),10);assert.equal(diameterInches('16 inch'),16);assert.equal(diameterInches('12.5”'),12.5);assert.equal(diameterInches('Large'),null);assert.equal(diameterInches('10 x 14 inch pan'),null);
+});
+test('The observation’s size stays attached to its price instead of using a different catalog size',()=>{
+ const shop=directory([{restaurant_id:'sized',cheese:1275,topping:null,error:null,checked_at:new Date().toISOString(),size_label:'Small',size_inches:null}],[{id:'sized',name:'Sized fixture',size:'16 inch'}])[0];assert.equal(shop.size,'Small');assert.equal(shop.sizeInches,null);
+});
 test('An operation-review location cannot appear in current price comparisons',()=>{
  const shops=directory([{restaurant_id:'prides',cheese:1499,topping:1699,error:null,checked_at:'2026-11-01T12:00:00Z'}]);
  const shop=shops.find(s=>s.id==='prides');

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Review desk · Beverly Pizza</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/admin.css"></head>
+<body><header><a class="brand" href="/">Beverly<span>Pizza</span><i>↗</i></a><a href="/coverage.html">Public coverage report</a></header>
+<main><h1>Review desk</h1><p>Check the source, confirm the Beverly location and pizza size, then publish your decision.</p>
+<p id="message" role="status" aria-live="polite"></p>
+<form id="login"><label>Admin password<input id="password" type="password" autocomplete="current-password" required></label><button>Sign in</button><p>Admin access requires an ADMIN_PASSWORD of at least 16 characters in Render’s Environment settings. Keep it out of chat and source code.</p></form>
+<section id="workspace" hidden>
+ <div class="toolbar"><p id="totals"></p><button id="refresh" type="button">Refresh</button><button id="new" type="button">Add a finding</button><button id="logout" type="button">Sign out</button></div>
+ <p class="hint">Approval publishes immediately. Rejection keeps the finding off the public site. Existing confirmed collectors continue nightly; prices you approve here become owner-managed, so future collector changes return to this queue.</p>
+ <div class="review-layout"><section><label>Show <select id="view"><option value="pending">Pending findings</option><option value="gaps">Missing prices / shop details</option><option value="history">Decision history</option></select></label><div id="queue"></div></section>
+ <section id="editor" hidden><h2 id="editor-title">Verify a finding</h2><p id="reason"></p><a id="evidence-link" target="_blank" rel="noopener noreferrer">Open source ↗</a><pre id="evidence"></pre>
+ <form id="publication">
+  <label>Existing restaurant, or add a new one<select name="restaurant_id" id="restaurant"><option value="">New Beverly restaurant</option></select></label>
+  <label>Restaurant name<input name="name" required maxlength="160"></label>
+  <label>Beverly street address<input name="address" required maxlength="240"></label>
+  <label>Phone<input name="phone" maxlength="40"></label>
+  <label>Source menu / business URL<input name="source_url" type="url" required></label>
+  <label>Publish decision<select name="mode" id="mode"><option value="prices">Confirmed pizza prices</option><option value="listing">Confirmed listing, prices still pending</option><option value="not-offered">Cheese pizza not offered</option><option value="closed">Confirmed closed / remove from directory</option></select></label>
+  <label>Pizza size as stated by restaurant<input name="size" placeholder="10 inch / 12 inch / diameter unconfirmed" maxlength="100"></label>
+  <div class="price-inputs"><label>Cheese pizza ($)<input name="cheese" type="text" inputmode="decimal" placeholder="16.99"></label><label>Cheese + pepperoni total ($)<input name="topping" type="text" inputmode="decimal" placeholder="18.99"></label></div>
+  <label>Verification notes (private)<textarea name="evidence" rows="3" required maxlength="3000" placeholder="What confirms the Beverly location, size and price? Include phone confirmation details if applicable."></textarea></label>
+  <label>Note shown publicly<textarea name="price_note" rows="2" maxlength="700" placeholder="Regular crust; prices before tax. Pepperoni is the comparison topping."></textarea></label>
+  <label class="confirm"><input type="checkbox" name="confirmed" required> I checked the evidence and confirm the location, status, size and prices entered above.</label>
+  <button id="publish">Approve & publish</button><button id="reject" type="button" class="secondary">Reject finding</button><button id="cancel" type="button" class="secondary">Cancel</button>
+ </form></section></div>
+</section></main><footer><span>Beverly Pizza · Private review desk</span></footer><script type="module" src="/admin-ui.js"></script></body></html>

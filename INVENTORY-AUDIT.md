@@ -1,5 +1,7 @@
 # Beverly pizza inventory audit — November 8, 2026
 
+**Current comparison policy:** any cheese pizza size is eligible. Record its explicit diameter in inches when available; otherwise show “Diameter unconfirmed” alongside a verified price. The earlier Large-only exclusions below describe the previous audit policy. Panini’s Small cheese ($12.75), Toscana’s cheese ($17.00), and Pressed Café’s cheese/pepperoni ($16.00/$17.00) now have verified live collectors. Their diameters still need owner/source confirmation. The private admin desk collects these diameter gaps and other uncertain findings for approval.
+
 28 locations tracked. This is a researched working inventory, not a verified census of every food establishment. Do not inflate the count to a target based on search result counts: directories often include surrounding towns, closed locations, duplicate names, or restaurants with only a kids pizza. Toscana Bar Italiano at 90 Rantoul was additionally confirmed from its official current food menu; its standard pizza diameter and plain topping charge remain unconfirmed.
 
 ## Additional menu checks

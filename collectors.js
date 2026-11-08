@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {load} from 'cheerio';
 import {parsePrices} from './prices.js';
+import {diameterInches} from './pizza-size.js';
 
 const MAX_BYTES=16*1024*1024;
 export class ReviewRequiredError extends Error {code='REVIEW_REQUIRED';}
@@ -111,15 +112,16 @@ async function paniniOptions(page){
  await size.waitFor({state:'visible'});
  const options=await size.locator('option').evaluateAll(es=>es.map(e=>({label:e.textContent,value:e.value})));
  const large=options.filter(o=>/^Large\b/i.test(o.label.trim()));
- if(large.length!==1)throw new ReviewRequiredError('Browser menu does not offer one unambiguous Large pizza size');
- await size.selectOption(large[0].value);
- const expected=large[0].label.match(/\$(\d+\.\d{2})/)?.[1];
- if(!expected)throw new Error('Large size has no explicit price');
+ const selected=large.length===1?large[0]:options.filter(o=>/^Small\b/i.test(o.label.trim())).length===1?options.find(o=>/^Small\b/i.test(o.label.trim())):null;
+ if(!selected)throw new ReviewRequiredError('Browser menu does not offer an unambiguous pizza size');
+ await size.selectOption(selected.value);
+ const expected=selected.label.match(/\$(\d+\.\d{2})/)?.[1];
+ if(!expected)throw new Error('Selected pizza size has no explicit price');
  await page.waitForFunction(value=>document.querySelector('#item-price-display')?.textContent.trim()==='$'+value,expected,{timeout:10000});
  const cheese=Math.round(Number(expected)*100);
  // Read the large base without adding anything to the cart. The current menu
  // does not expose a confirmed whole-pizza pepperoni rate; leave it unknown.
- return validatePrices({cheese,topping:null});
+ return {...validatePrices({cheese,topping:null}),size_label:selected.label.replace(/\s*\(\$.*$/, '').trim(),size_inches:diameterInches(selected.label)};
 }
 
 function validatePrices(result){
@@ -147,6 +149,11 @@ export function parseDocument(adapter,text){
   if(!/207 Essex Street, Beverly, MA 01915/i.test(normalized))throw new Error('Browser menu is not Nick’s Beverly location');
   const match=normalized.match(/Pizza & Calzones\s+Cheese\s+SM\s*-\s*\$\d+\.\d{2}\s+LG\s*-\s*\$(\d+\.\d{2})\s+Specialty Pizzas/i);
   if(match){cheese=match[1];topping=null;}
+ }else if(adapter==='pressed-browser'){
+  if(!/Pressed Cafe Beverly/i.test(normalized)||!/900 Cummings Center, Suite 100-U, Beverly, MA 01915/i.test(normalized))throw new Error('Browser menu is not Pressed Café Beverly');
+  const section=normalized.match(/\bPIZZA\s+Steak Bomb Pizza[\s\S]{0,2400}/)?.[0];
+  cheese=section?.match(/\bCheese Pizza\s+\$(\d+\.\d{2})/i)?.[1];
+  topping=section?.match(/\bPepperoni Pizza\s+\$(\d+\.\d{2})/i)?.[1];
  }
  if(cheese===undefined||topping===undefined)throw new Error('Menu format needs review; no unambiguous large prices');
  const result={cheese:Math.round(Number(cheese)*100),topping:topping===null?null:Math.round(Number(topping)*100)};
@@ -176,5 +183,6 @@ export async function collectPrices(shop){
  }else{
   const page=await download(shop.url);url=page.url;text=page.data.toString();prices=parsePrices(shop.adapter,text);
  }
- return {...prices,source_url:url,source_type:config.type,source_sha256:createHash('sha256').update(text).digest('hex')};
+ const size_label=prices.size_label??shop.size??'Diameter unconfirmed';
+ return {...prices,size_label,size_inches:prices.size_inches??diameterInches(size_label),source_url:url,source_type:config.type,source_sha256:createHash('sha256').update(text).digest('hex')};
 }

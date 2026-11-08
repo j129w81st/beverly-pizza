@@ -21,6 +21,7 @@ test('Nick’s rejects another location and menus without a large price',()=>{
  assert.throws(()=>parseDocument('nicks-browser',nicks.replace('207 Essex Street','100 Main Street')));
  assert.throws(()=>parseDocument('nicks-browser',nicks.replace('LG - $12.99','')));
 });
+test('Pressed reads cheese and plain pepperoni without a Large restriction',()=>assert.deepEqual(parseDocument('pressed-browser','Pressed Cafe Beverly 900 Cummings Center, Suite 100-U, Beverly, MA 01915 PIZZA Steak Bomb Pizza $23.00 Cheese Pizza $16.00 A classic favorite. Greek G.B.C $15.00 Pepperoni Pizza $17.00 Traditional favorite.'),{cheese:1600,topping:1700}));
 test('PDF collector rejects HTML responses',async()=>assert.rejects(pdfText(Buffer.from('<html>Access denied</html>')),/did not return a PDF/));
 
 test('Ellie’s selects Large, waits for its topping charge and never adds to cart',{skip:!process.env.RUN_BROWSER_TESTS},async()=>{
@@ -78,7 +79,7 @@ test('PDF collector discovers the current link and records its source',async()=>
  }finally{await new Promise(resolve=>server.close(resolve));}
 });
 
-test('Browser collector handles pickup, waits for the large price, and rejects small-only menus',{skip:!process.env.RUN_BROWSER_TESTS},async()=>{
+test('Browser collector handles pickup and records the selected size, including small-only menus',{skip:!process.env.RUN_BROWSER_TESTS},async()=>{
  let cartRequests=0;
  const server=createServer((req,res)=>{
   if(req.method!=='GET')cartRequests++;
@@ -92,7 +93,7 @@ test('Browser collector handles pickup, waits for the large price, and rejects s
    </div><script>
    function showItem(){
     document.querySelector('#defaultModal').innerHTML=${JSON.stringify(itemHtml)};
-    document.querySelector('#OrderItem_SizeId').addEventListener('change',()=>setTimeout(()=>document.querySelector('#item-price-display').textContent='$18.00',100));
+    document.querySelector('#OrderItem_SizeId').addEventListener('change',event=>setTimeout(()=>document.querySelector('#item-price-display').textContent=event.target.value==='large'?'$18.00':'$12.75',100));
     document.querySelector('#fake-cart').addEventListener('click',()=>fetch('/cart',{method:'POST'}));
    }
    </script></body>`);
@@ -103,7 +104,8 @@ test('Browser collector handles pickup, waits for the large price, and rejects s
  try{
   const result=await collectPrices(shop);
   assert.equal(result.cheese,1800);assert.equal(result.topping,null);assert.equal(result.source_type,'browser');
-  await assert.rejects(collectPrices({...shop,url:url+'/small'}),error=>error.code==='REVIEW_REQUIRED');
+  const smallResult=await collectPrices({...shop,url:url+'/small'});
+  assert.equal(smallResult.cheese,1275);assert.equal(smallResult.size_label,'Small');assert.equal(smallResult.size_inches,null);
   assert.equal(cartRequests,0,'collector must never add items to the cart');
  }finally{await closeCollectors();await new Promise(resolve=>server.close(resolve));}
 });

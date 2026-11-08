@@ -9,6 +9,13 @@ on:
       - collectors.js
       - ocr.js
       - db.js
+      - review-schema.js
+      - review-store.js
+      - pizza-size.js
+      - admin.js
+      - review-model.js
+      - server-app.js
+      - test/**
       - package-lock.json
       - .github/workflows/refresh-prices.yml
   schedule:
@@ -26,6 +33,19 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: beverly-ci-test
+          POSTGRES_DB: beverly_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       NODE_ENV: production
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -41,6 +61,7 @@ jobs:
         env:
           RUN_BROWSER_TESTS: '1'
           RUN_OCR_TESTS: '1'
+          TEST_DATABASE_URL: postgres://postgres:beverly-ci-test@127.0.0.1:5432/beverly_test
       - name: Check database configuration
         run: node -e 'if (!process.env.DATABASE_URL) throw new Error("Add the DATABASE_URL repository secret before running refreshes")'
       - run: npm run refresh -- --force

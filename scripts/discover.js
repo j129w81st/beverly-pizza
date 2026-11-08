@@ -2,6 +2,8 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {load} from 'cheerio';
 import {restaurants} from '../data.js';
 import {download} from '../collectors.js';
+import {init,close} from '../db.js';
+import {catalog,enqueueReview} from '../review-store.js';
 
 // These are discovery leads, never automatically published restaurants/prices.
 const sources=['https://bevmain.org/explore/','https://www.restaurantji.com/ma/beverly/pizza/'];
@@ -48,5 +50,14 @@ try{
 }catch(error){report.sources.push({url:'https://www.openstreetmap.org/',status:'failed',error:error.message});}
 await mkdir('.local',{recursive:true});
 await writeFile('.local/discovery-report.json',JSON.stringify(report,null,2));
+// Preserve leads in the private admin queue as well as the downloadable artifact.
+await init();
+try{
+ const known=await catalog();
+ for(const candidate of report.candidates){
+  if(known.some(s=>normalize(s.name)===normalize(candidate.name)))continue;
+  await enqueueReview({kind:'discovery',...candidate,reason:candidate.reason});
+ }
+}finally{await close();}
 console.log(`Discovery report: ${report.candidates.length} unverified leads; ${report.sources.filter(s=>s.status==='checked').length}/${report.sources.length} sources checked`);
 if(report.sources.every(s=>s.status==='failed'))process.exitCode=1;

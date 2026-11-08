@@ -58,6 +58,9 @@ export function parsePrices(adapter,html){
  }else if(adapter==='marias'){
   cheese=text.match(/Large Three Blended Cheeses Pizza\s*\$(\d+\.\d{2})/i)?.[1];
   topping=null;
+ }else if(adapter==='toscana'){
+  if(/90 Rantoul Street\s*,?\s*Beverly/i.test(text))cheese=text.match(/Salads\s*\/\s*Pizza\s+Cheese Pizza\s*\$(\d+\.\d{2})/i)?.[1];
+  topping=null; // Diavolo includes ricotta and other additions, not plain pepperoni.
  }
  if(!cheese||topping===undefined) throw new Error('Menu format needs review');
  const c=Math.round(Number(cheese)*100),t=topping===null?null:c+Math.round(Number(topping)*100);
