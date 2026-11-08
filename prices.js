@@ -64,6 +64,6 @@ export function parsePrices(adapter,html){
  }
  if(!cheese||topping===undefined) throw new Error('Menu format needs review');
  const c=Math.round(Number(cheese)*100),t=topping===null?null:c+Math.round(Number(topping)*100);
- if(!Number.isFinite(c)||c<500||c>10000||(t!==null&&(!Number.isFinite(t)||t<c||t>15000)))throw new Error('Price outside expected range; review required');
+ if(!Number.isFinite(c)||c<100||c>10000||(t!==null&&(!Number.isFinite(t)||t<c||t>15000)))throw new Error('Price outside expected range; review required');
  return {cheese:c,topping:t};
 }

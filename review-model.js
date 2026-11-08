@@ -14,7 +14,7 @@ export function preparePublication(input,shops){
  const name=text(input.name,160),address=text(input.address,240),size=text(input.size,100),evidence=text(input.evidence,3000);
  if(!name||!address||!evidence)bad('Name, Beverly address and verification notes are required');
  const normalize=value=>value.toLowerCase().replace(/[^a-z0-9]/g,'').replace(/street/g,'st').replace(/avenue/g,'ave');
- if(!old&&shops.some(s=>normalize(s.address)===normalize(address)||normalize(s.name)===normalize(name)))bad('This looks like an existing restaurant. Select it from the restaurant dropdown instead of adding a duplicate.');
+ if(!old&&shops.some(s=>normalize(s.name)===normalize(name)))bad('This looks like an existing restaurant. Select it from the restaurant dropdown instead of adding a duplicate.');
  const source_url=sourceUrl(input.source_url);
  const mode=input.mode;
  if(!['prices','listing','not-offered','closed'].includes(mode))bad('Select what to publish');
@@ -22,7 +22,7 @@ export function preparePublication(input,shops){
   if(value===null||value===undefined||value==='')return null;
   if(typeof value!=='string'||!/^\d{1,3}(?:\.\d{1,2})?$/.test(value))bad('Enter prices in dollars, for example 16.99');
   const number=Math.round(Number(value)*100);
-  if(number<500||number>15000)bad('Price must be between $5 and $150');return number;
+  if(number<100||number>15000)bad('Price must be between $1 and $150');return number;
  };
  let cheese=null,topping=null;
  if(mode==='prices'){

@@ -1,0 +1,25 @@
+[
+ {
+  "name":"Cotton Mill Cafe - Express",
+  "address":"254 Essex Street, Beverly, MA",
+  "source_url":"https://cottonmillcafeexpress.toast.site/menu/cotton-mill-express",
+  "lead_url":"https://cottonmillcafeexpress.toast.site/menu/cotton-mill-express",
+  "reason":"Official indexed menu lists a 6-inch personal cheese flatbread at $4.50. Fresh local request requires security verification. Confirm current operation and current menu before approving; this is a different address from the older Cotton Mill Cafe listing at 480 Rantoul.",
+  "candidate":{"cheese":450,"topping":null,"size_label":"6 inch personal flatbread"},
+  "excerpt":"Personal Cheese Pizza — 6” individual cheese flatbread — $4.50. Personal Pepperoni Pizza is $5.00, but its diameter is not explicitly repeated. Phone 339-927-5280."
+ },
+ {
+  "name":"Whole Foods Market pizza counter",
+  "address":"150 Brimbal Avenue, Beverly, MA",
+  "source_url":"https://www.wholefoodsmarket.com/stores/beverly",
+  "lead_url":"https://www.wholefoodsmarket.com/stores/beverly",
+  "reason":"Store operation is confirmed. Reviews and a generic prepared-foods job mention pizza, but the official store page does not list a pizza counter. Verify that cooked whole cheese pizzas are currently sold before adding."
+ },
+ {
+  "name":"Organic Garden / OG Kitchen",
+  "address":"294 Cabot Street, Beverly, MA",
+  "source_url":"https://www.organicgardencafe.com/",
+  "lead_url":"https://www.organicgardencafe.com/",
+  "reason":"Historical vegan pizza listings and a redirected official domain. Verify current business, exact address, pizza availability and duplicates before adding. Address conflicts with the same building as Little Italy, so do not approve based on address alone."
+ }
+]

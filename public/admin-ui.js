@@ -27,7 +27,7 @@ function edit(review,shop){
  try{const parsed=new URL(url);if(['http:','https:'].includes(parsed.protocol)){link.href=parsed.href;link.hidden=false;}}catch{}
  $('evidence').textContent=[p.excerpt,p.confidence==null?'':`OCR confidence: ${p.confidence} (requires verification)`,p.cuisine?`Discovery cuisine tag: ${p.cuisine}`:'',p.candidate?JSON.stringify(p.candidate,null,2):''].filter(Boolean).join('\n\n');
  if(p.kind==='manual'){for(const key of ['name','address','phone','source_url','size','cheese','topping','evidence','price_note','mode'])if(candidate[key]!=null)field(key,candidate[key]);}
- else if(candidate.cheese!=null){field('cheese',(candidate.cheese/100).toFixed(2));field('topping',candidate.topping==null?'':(candidate.topping/100).toFixed(2));}
+ else if(candidate.cheese!=null){field('cheese',(candidate.cheese/100).toFixed(2));field('topping',candidate.topping==null?'':(candidate.topping/100).toFixed(2));if(candidate.size_label)field('size',candidate.size_label);}
  if(!candidate.cheese&&!form.elements.cheese.value)field('mode','listing');
  form.elements.confirmed.checked=false;
  $('editor').scrollIntoView({behavior:'smooth',block:'start'});

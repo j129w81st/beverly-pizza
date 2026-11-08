@@ -125,7 +125,7 @@ async function paniniOptions(page){
 }
 
 function validatePrices(result){
- if(!Number.isFinite(result.cheese)||result.cheese<500||result.cheese>10000||(result.topping!==null&&(!Number.isFinite(result.topping)||result.topping<result.cheese||result.topping>15000)))throw new Error('Price outside expected range; review required');
+ if(!Number.isFinite(result.cheese)||result.cheese<100||result.cheese>10000||(result.topping!==null&&(!Number.isFinite(result.topping)||result.topping<result.cheese||result.topping>15000)))throw new Error('Price outside expected range; review required');
  return result;
 }
 export async function closeCollectors(){

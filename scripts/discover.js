@@ -4,12 +4,15 @@ import {restaurants} from '../data.js';
 import {download} from '../collectors.js';
 import {init,close} from '../db.js';
 import {catalog,enqueueReview} from '../review-store.js';
+import {readFile} from 'node:fs/promises';
 
 // These are discovery leads, never automatically published restaurants/prices.
 const sources=['https://bevmain.org/explore/','https://www.restaurantji.com/ma/beverly/pizza/'];
 const normalize=s=>s.toLowerCase().replace(/[^a-z0-9]/g,'');
 const aliases=['Cafe Salerno',"Mikey's Famous Roastbeef And Pizza Beverly",'Cabot Pizza and Spanish food',"Domino's Pizza"].map(normalize);
 const report={checked_at:new Date().toISOString(),completeCityInventory:false,sources:[],candidates:[]};
+const research=JSON.parse(await readFile(new URL('../research-leads.json',import.meta.url),'utf8'));
+report.candidates.push(...research.map(lead=>({...lead,status:'unverified-research-lead'})));
 for(const source of sources){
  try{
   const response=await download(source),$=load(response.data.toString());$('script,style,nav,footer').remove();
